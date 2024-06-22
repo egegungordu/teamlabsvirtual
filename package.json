@@ -19,6 +19,7 @@
     "r3f-perf": "^7.2.1",
     "react": "^18",
     "react-dom": "^18",
+    "react-icons": "^5.2.1",
     "tailwind-merge": "^2.3.0",
     "three": "^0.164.1",
     "three-custom-shader-material": "^5.4.0"

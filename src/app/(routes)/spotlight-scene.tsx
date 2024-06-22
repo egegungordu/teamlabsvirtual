@@ -2,17 +2,14 @@
 
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { FirstPersonControls, OrbitControls } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import { Vignette, EffectComposer, Bloom } from "@react-three/postprocessing";
 import {
   AdditiveBlending,
   Color,
   Group,
   Mesh,
-  PerspectiveCamera,
-  Quaternion,
   ShaderMaterial,
-  Vector2,
   Vector2Like,
   Vector2Tuple,
   Vector3,
@@ -46,7 +43,7 @@ const spotlightShader = {
       float beamShine = pow(1.0 + dot(beamDirection, toCamera), 4.0) / 20.0;
       float falloff = max(1.0 - distanceToBeamRoot / uFalloffDistance, 0.0);
 
-      vAlpha = (fresnel + beamShine * fresnel) * falloff / 3.0;
+      vAlpha = (fresnel + beamShine * fresnel) * falloff / 4.0;
 
       gl_Position = projectedPosition;
     }
@@ -123,250 +120,8 @@ function Spotlights() {
   const groupRef = useRef<Group | null>(null);
 
   const spotlights = useMemo(() => {
-    const center = [0, 0, 0];
-    const gap = 40;
-    const xCount = 10;
-    const yCount = 10;
-    const zCount = 16;
-
-    const behindWallSizeX = (xCount - 1) * gap;
-    const behindWallSizeY = (yCount - 1) * gap;
-    const sideWallSizeZ = (zCount - 1) * gap;
-    const sideWallSizeY = behindWallSizeY;
-
     const spotlights = [];
-
-    /* // back wall */
-    /* for (let i = 0; i < xCount; i++) { */
-    /*   for (let j = 0; j < yCount; j++) { */
-    /*     const position = [ */
-    /*       center[0] - behindWallSizeX / 2 + i * gap, */
-    /*       center[1] - behindWallSizeY / 2 + j * gap, */
-    /*       center[2] - sideWallSizeZ / 2, */
-    /*     ] as Vector3Tuple; */
-    /*     const rotation = [ */
-    /*       /* Math.PI / 2, */
-    /*       Math.PI / 2 * (i / xCount), */
-    /*       0, */
-    /*       0, */
-    /*     ] as Vector3Tuple; */
-    /*     const shader = new ShaderMaterial({ */
-    /*       blending: AdditiveBlending, */
-    /*       vertexShader: spotlightShader.vertex, */
-    /*       fragmentShader: spotlightShader.fragment, */
-    /*       uniforms: { */
-    /*         uColor: { */
-    /*           value: new Color(0xffffff), */
-    /*         }, */
-    /*         uTime: { */
-    /*           value: 0, */
-    /*         }, */
-    /*         uCameraPosition: { */
-    /*           value: new Vector3(), */
-    /*         }, */
-    /*         uBeamRoot: { */
-    /*           value: new Vector3(...position), */
-    /*         }, */
-    /*         uFalloffDistance: { */
-    /*           value: SPOTLIGHT_LENGTH, */
-    /*         }, */
-    /*       }, */
-    /*       transparent: true, */
-    /*       depthTest: false, */
-    /*     }); */
-    /*     spotlights.push({ */
-    /*       position, */
-    /*       rotation, */
-    /*       material: shader, */
-    /*     }); */
-    /*   } */
-    /* } */
-    /**/
-    // left wall
-    /* for (let i = 0; i < yCount; i++) { */
-    /*   for (let j = 0; j < zCount; j++) { */
-    /*     const position = [ */
-    /*       center[0] - behindWallSizeX / 2, */
-    /*       center[1] - sideWallSizeY / 2 + i * gap, */
-    /*       center[2] - sideWallSizeZ / 2 + j * gap, */
-    /*     ] as Vector3Tuple; */
-    /*     const rotation = [0, 0, -Math.PI / 2] as Vector3Tuple; */
-    /*     const shader = new ShaderMaterial({ */
-    /*       blending: AdditiveBlending, */
-    /*       vertexShader: spotlightShader.vertex, */
-    /*       fragmentShader: spotlightShader.fragment, */
-    /*       uniforms: { */
-    /*         uColor: { */
-    /*           value: new Color(0xffffff), */
-    /*         }, */
-    /*         uTime: { */
-    /*           value: 0, */
-    /*         }, */
-    /*         uCameraPosition: { */
-    /*           value: new Vector3(), */
-    /*         }, */
-    /*         uBeamRoot: { */
-    /*           value: new Vector3(...position), */
-    /*         }, */
-    /*         uFalloffDistance: { */
-    /*           value: SPOTLIGHT_LENGTH, */
-    /*         }, */
-    /*         uBeamSizeMultiplier: { */
-    /*           value: 1, */
-    /*         }, */
-    /*       }, */
-    /*       transparent: true, */
-    /*       depthTest: false, */
-    /*     }); */
-    /*     spotlights.push({ */
-    /*       i, */
-    /*       j, */
-    /*       position, */
-    /*       rotation, */
-    /*       material: shader, */
-    /*     }); */
-    /*   } */
-    /* } */
-
-    // right wall
-    /* for (let i = 0; i < yCount; i++) { */
-    /*   for (let j = 0; j < zCount; j++) { */
-    /*     const position = [ */
-    /*       center[0] + behindWallSizeX / 2, */
-    /*       center[1] - sideWallSizeY / 2 + i * gap, */
-    /*       center[2] - sideWallSizeZ / 2 + j * gap, */
-    /*     ] as Vector3Tuple; */
-    /*     const rotation = [0, 0, Math.PI / 2] as Vector3Tuple; */
-    /*     const shader = new ShaderMaterial({ */
-    /*       blending: AdditiveBlending, */
-    /*       vertexShader: spotlightShader.vertex, */
-    /*       fragmentShader: spotlightShader.fragment, */
-    /*       uniforms: { */
-    /*         uColor: { */
-    /*           value: new Color(0xffffff), */
-    /*         }, */
-    /*         uTime: { */
-    /*           value: 0, */
-    /*         }, */
-    /*         uCameraPosition: { */
-    /*           value: new Vector3(), */
-    /*         }, */
-    /*         uBeamRoot: { */
-    /*           value: new Vector3(...position), */
-    /*         }, */
-    /*         uFalloffDistance: { */
-    /*           value: SPOTLIGHT_LENGTH, */
-    /*         }, */
-    /*         uBeamSizeMultiplier: { */
-    /*           value: 1, */
-    /*         }, */
-    /*       }, */
-    /*       transparent: true, */
-    /*       depthTest: false, */
-    /*     }); */
-    /*     spotlights.push({ */
-    /*       i, */
-    /*       j, */
-    /*       position, */
-    /*       rotation, */
-    /*       material: shader, */
-    /*     }); */
-    /*   } */
-    /* } */
-
-    // top wall
-    /* for (let i = 0; i < xCount; i++) { */
-    /*   for (let j = 0; j < zCount; j++) { */
-    /*     const position = [ */
-    /*       center[0] - behindWallSizeX / 2 + i * gap, */
-    /*       center[1] + behindWallSizeY / 2, */
-    /*       center[2] - sideWallSizeZ / 2 + j * gap, */
-    /*     ] as Vector3Tuple; */
-    /*     const rotation = [0, 0, 0] as Vector3Tuple; */
-    /*     const shader = new ShaderMaterial({ */
-    /*       blending: AdditiveBlending, */
-    /*       vertexShader: spotlightShader.vertex, */
-    /*       fragmentShader: spotlightShader.fragment, */
-    /*       uniforms: { */
-    /*         uColor: { */
-    /*           value: new Color(0xffffff), */
-    /*         }, */
-    /*         uTime: { */
-    /*           value: 0, */
-    /*         }, */
-    /*         uCameraPosition: { */
-    /*           value: new Vector3(), */
-    /*         }, */
-    /*         uBeamRoot: { */
-    /*           value: new Vector3(...position), */
-    /*         }, */
-    /*         uFalloffDistance: { */
-    /*           value: SPOTLIGHT_LENGTH, */
-    /*         }, */
-    /*         uBeamSizeMultiplier: { */
-    /*           value: 1, */
-    /*         }, */
-    /*       }, */
-    /*       transparent: true, */
-    /*       depthTest: false, */
-    /*     }); */
-    /*     spotlights.push({ */
-    /*       i, */
-    /*       j, */
-    /*       position, */
-    /*       rotation, */
-    /*       material: shader, */
-    /*     }); */
-    /*   } */
-    /* } */
-
-    // bottom wall
-    /* for (let i = 0; i < xCount; i++) { */
-    /*   for (let j = 0; j < zCount; j++) { */
-    /*     const position = [ */
-    /*       center[0] - behindWallSizeX / 2 + i * gap, */
-    /*       center[1] - sideWallSizeY / 2, */
-    /*       center[2] - sideWallSizeZ / 2 + j * gap, */
-    /*     ] as Vector3Tuple; */
-    /*     const rotation = [0, 0, 0] as Vector3Tuple; */
-    /*     const shader = new ShaderMaterial({ */
-    /*       blending: AdditiveBlending, */
-    /*       vertexShader: spotlightShader.vertex, */
-    /*       fragmentShader: spotlightShader.fragment, */
-    /*       uniforms: { */
-    /*         uColor: { */
-    /*           value: new Color(0xffffff), */
-    /*         }, */
-    /*         uTime: { */
-    /*           value: 0, */
-    /*         }, */
-    /*         uCameraPosition: { */
-    /*           value: new Vector3(), */
-    /*         }, */
-    /*         uBeamRoot: { */
-    /*           value: new Vector3(...position), */
-    /*         }, */
-    /*         uFalloffDistance: { */
-    /*           value: SPOTLIGHT_LENGTH, */
-    /*         }, */
-    /*         uBeamSizeMultiplier: { */
-    /*           value: 1, */
-    /*         }, */
-    /*       }, */
-    /*       transparent: true, */
-    /*       depthTest: false, */
-    /*     }); */
-    /*     spotlights.push({ */
-    /*       i, */
-    /*       j, */
-    /*       position, */
-    /*       rotation, */
-    /*       material: shader, */
-    /*     }); */
-    /*   } */
-    /* } */
-
-    // put spotlights in a circle
+    const center = [0, 0, 0];
     const spotlightsInRing = 64;
     const ringGap = 12;
     const ringRadius = SPOTLIGHT_LENGTH / 1.2;
@@ -439,11 +194,11 @@ function Spotlights() {
           [dir.x, dir.y],
           {
             center: {
-              x: Math.sin(clock.elapsedTime + child.userData.j * 0.2) * 50,
-              y: Math.cos(clock.elapsedTime + child.userData.i * 0.2) * 50,
+              x: Math.sin(clock.elapsedTime / 2 + child.userData.j * 0.2) * 50,
+              y: Math.cos(clock.elapsedTime / 2 + child.userData.i * 0.2) * 50,
             },
             radius:
-              125 - Math.sin(clock.elapsedTime + child.userData.j * 0.4) * 85,
+              125 - Math.sin(clock.elapsedTime / 2 + child.userData.j * 0.4) * 85,
           },
         );
         if (targetDegree !== null) {
@@ -454,10 +209,7 @@ function Spotlights() {
             0.5,
             0.5,
           );
-          child.material.uniforms.uBeamSizeMultiplier.value = 3;
-          /* child.material.uniforms.uBeamSizeMultiplier.value = Math.sin( */
-          /*   clock.elapsedTime * 0.5 + child.userData.j * 0.15, */
-          /* ) * 2; */
+          child.material.uniforms.uBeamSizeMultiplier.value = 7;
         } else {
           child.material.uniforms.uColor.value = new Color(0x000);
         }
@@ -492,7 +244,7 @@ function Spotlights() {
           position={spotlight.position}
           rotation={spotlight.rotation}
         >
-          <cylinderGeometry args={[3, 0.5, SPOTLIGHT_LENGTH, 16, 1, true]} />
+          <cylinderGeometry args={[3, 2, SPOTLIGHT_LENGTH, 16, 1, true]} />
           <shaderMaterial {...spotlight.material} />
         </mesh>
       ))}
@@ -500,28 +252,12 @@ function Spotlights() {
   );
 }
 
-function Walls() {
-  return (
-    <group>
-      <mesh
-        renderOrder={9999999}
-        position={[-50, 0, 0]}
-        rotation={[0, Math.PI / 2, 0]}
-      >
-        <planeGeometry args={[100, 100]} />
-        <meshBasicMaterial color={0xff00ff} transparent={false} />
-      </mesh>
-    </group>
-  );
-}
-
-export default function Scene() {
+export default function SpotlightScene({ showPerf = true }: { showPerf?: boolean }) {
   return (
     <Canvas camera={{ position: [0, 0, 920], fov: 35, far: 3000 }}>
-      <Perf position="bottom-right" />
-      <OrbitControls autoRotate />
+      {showPerf && <Perf position="bottom-right" style={{marginBottom: 32}} />}
+      <OrbitControls autoRotate autoRotateSpeed={1}/>
       <Spotlights />
-      {/* <Walls /> */}
       <EffectComposer>
         <Vignette eskil={false} offset={0.1} darkness={1.1} />
         <Bloom luminanceThreshold={0.3} luminanceSmoothing={0.9} height={300} />
