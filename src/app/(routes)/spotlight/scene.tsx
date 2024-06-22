@@ -252,7 +252,7 @@ function Spotlights() {
   );
 }
 
-export default function SpotlightScene({ showPerf = true }: { showPerf?: boolean }) {
+export default function Scene({ showPerf = true }: { showPerf?: boolean }) {
   return (
     <Canvas camera={{ position: [0, 0, 920], fov: 35, far: 3000 }}>
       {showPerf && <Perf position="bottom-right" style={{marginBottom: 32}} />}
